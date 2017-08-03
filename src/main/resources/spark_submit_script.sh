@@ -1,0 +1,1 @@
+spark-submit --class cz.zcu.kiv.Main --master local[*] /Users/dorianbeganovic/gsoc/Spark_EEG_Analysis/target/spark_eeg-1.2-jar-with-dependencies.jar "info_file=/user/digitalAssistanceSystem/data/numbers/infoTrain.txt&fe=dwt-8&train_clf=logreg"
