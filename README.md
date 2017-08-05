@@ -6,8 +6,12 @@ The server listens for requests:
 -> /jobs/submit/(id)?{qp}  
 -> /jobs/check/(id)  
 -> /jobs/result/(id)  
+-> /jobs/log/{id}  
+-> /jobs/cancel/{id}    
+-> /jobs/configuration/{name}  
+-> /classifiers/list  
 
-where the {id} path variable (integer) is provided by the client,
+where the {id} or {name} are path variables provided by the client,
 and {qp} are query parameters that configure the spark application.
 
 
