@@ -29,15 +29,15 @@ The supported query parameters are:
  - fe = {dwt-8} 
  
  3. Classification  
- - a) (REQUIRED - choose whether to train or load a classifier)  
+ - a) (REQUIRED - choose whether to train or load a classifier)    
  	train_clf = {svm,dt,logreg,rf}   
  			OR  
  	load_clf={svm,dt,logreg,rf} AND load_name={src/main/resources/Classifiers/(*name*) }  
  		
- - b) (OPTIONAL - choose whether to save the classifier and give him a name)
- 	save_clf={true,false} 
- 		AND 
- 	save_name={*name}   
+ - b) (OPTIONAL - choose whether to save the classifier and give him a name)  
+ 	save_clf={true,false}   
+ 		AND  
+ 	save_name={*name}     
  
  - c) (REQUIRED - the specific configuration for each classifier)  
  	config_*clf_param*
