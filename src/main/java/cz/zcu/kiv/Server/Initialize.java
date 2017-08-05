@@ -36,6 +36,8 @@ public class Initialize {
         new File(System.getProperty("user.home") + "/spark_server/classifiers").mkdirs();
         new File(System.getProperty("user.home") + "/spark_server/scripts").mkdirs();
         new File(System.getProperty("user.home") + "/spark_server/results").mkdirs();
+        new File(System.getProperty("user.home") + "/spark_server/logs").mkdirs();
+
     }
 
     @Test

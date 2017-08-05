@@ -32,6 +32,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 public class Main {
     public static void main(String[] args) {
+
         Initialize.initFolder();
         SpringApplication.run(Main.class,args);
     }

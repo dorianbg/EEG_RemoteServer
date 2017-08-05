@@ -5,6 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.scheduling.annotation.Async;
 
 import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /***********************************************************************************************************************
@@ -41,13 +43,15 @@ public class SparkSubmitService {
 
 
     @Async
-    public void submitJob(Map<String,String> queryMap){
+    public void submitJob(Map<String,String> queryMap, int id){
         logger.info("Submitting a job with query parameters = " + queryMap);
         this.queryMap = queryMap;
         String content = "spark-submit " +
                 "--class cz.zcu.kiv.Main " +
                 "--master local[*] " +
                 "--conf spark.driver.host=localhost " +
+                "--conf spark.executor.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
+                "--conf spark.driver.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
                 "/Users/dorianbeganovic/gsoc/Spark_EEG_Analysis/target/spark_eeg-1.2-jar-with-dependencies.jar " +
                 "\"" +
                 queryMap.toString().replace("{","").replace("}","").replace(", ","&") +
@@ -140,6 +144,31 @@ public class SparkSubmitService {
             e.printStackTrace();
         }
         return "";
+    }
+
+    @Async
+    public String getLog(int id){
+        List<String> lines = null;
+        try(BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"))) {
+            lines = new LinkedList<String>();
+            for(String tmp; (tmp = br.readLine()) != null;)
+                if (lines.add(tmp) && lines.size() > 100)
+                    lines.remove(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        StringBuilder sb = new StringBuilder(10000);
+        for (String s : lines)
+        {
+            sb.append(s);
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    @Async
+    public void cancelJob(){
+        process.destroy();
     }
 
 

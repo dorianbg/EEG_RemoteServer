@@ -5,8 +5,9 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.*;
 
 /***********************************************************************************************************************
  *
@@ -46,7 +47,7 @@ public class SparkController {
         jobManager.put(id,new SparkSubmitService());
         logger.info("Entries " + jobManager.entrySet());
         // actually submit a job
-        jobManager.get(id).submitJob(queryMap);
+        jobManager.get(id).submitJob(queryMap,id);
         return "OK";
     }
 
@@ -61,4 +62,32 @@ public class SparkController {
         logger.info("Received a request to get the result of job");
         return jobManager.get(id).getResults();
     }
+
+
+    @RequestMapping(value = "/classifiers/list",method = RequestMethod.GET)
+    public String getSavedClassifiers(){
+        logger.info("Fetching saved classifiers");
+        File file = new File(System.getProperty("user.home") + "/spark_server/classifiers");
+        String[] directories = file.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+        return Arrays.toString(directories);
+    }
+
+    @RequestMapping(value = "/jobs/log/{id}", method = RequestMethod.GET)
+    public String getJobLog(@PathVariable Integer id){
+        logger.info("Getting the log of a job " + id);
+        return jobManager.get(id).getLog(id);
+    }
+
+    @RequestMapping(value = "/jobs/cancel/{id}", method = RequestMethod.GET)
+    public void cancelJob(@PathVariable Integer id){
+        logger.info("Canceling the job with id " + id);
+        jobManager.get(id).cancelJob();
+    }
+
+
 }
