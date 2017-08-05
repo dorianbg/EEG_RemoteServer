@@ -5,8 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.*;
 
 /***********************************************************************************************************************
@@ -83,11 +82,27 @@ public class SparkController {
         return jobManager.get(id).getLog(id);
     }
 
+    @RequestMapping(value = "/jobs/configuration/{name}", method = RequestMethod.GET)
+    public String getSavedClfConfig(@PathVariable String name){
+        logger.info("Getting the configuration of a job " + name);
+
+        StringBuilder sb = new StringBuilder(25);
+        String line;
+        try(BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/configurations/" + name + ".conf"))) {
+            while((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
+    }
+
+
     @RequestMapping(value = "/jobs/cancel/{id}", method = RequestMethod.GET)
     public void cancelJob(@PathVariable Integer id){
         logger.info("Canceling the job with id " + id);
         jobManager.get(id).cancelJob();
     }
-
 
 }

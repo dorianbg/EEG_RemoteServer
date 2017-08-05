@@ -39,6 +39,7 @@ public class SparkSubmitService {
     private static Log logger = LogFactory.getLog(SparkSubmitService.class);
 
     private Map<String, String> queryMap;
+    private boolean finished = true;
     Process process;
 
 
@@ -58,7 +59,21 @@ public class SparkSubmitService {
                 "\"";
         logger.info("Content of the script" + content);
 
-        String scriptLocation = System.getProperty("user.home") + "/spark_server/scripts/" + "spark_submit_script.sh";
+        // write the job configuration into a file
+        if(queryMap.containsKey("save_clf") && queryMap.get("save_clf").equals("true")){
+            String text = hashMapToText(queryMap);
+            try(  PrintWriter out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf")  ){
+                out.println(text);
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        String scriptLocation = System.getProperty("user.home") + "/spark_server/scripts/" + "spark_submit_script_jobId=" + id + ".sh";
+
+
         logger.info("Script location" + scriptLocation);
 
         PrintWriter out = null;
@@ -109,22 +124,15 @@ public class SparkSubmitService {
         } catch (Exception e) {
             return "RUNNING";
         }
-
-        /*
-        if (flag == false) {
-            logger.info("Job is running");
-            return ;
-        } else {
-            logger.info("Job has finsihed");
-            return ;
-        }
-        */
     }
 
     @Async
     public String getResults(){
         logger.info("Reading results for job in location " + queryMap.get("result_path"));
 
+        if(finished == false){
+           return "Job cancelled";
+        }
         try(BufferedReader br = new BufferedReader(new FileReader(queryMap.get("result_path")))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
@@ -152,7 +160,7 @@ public class SparkSubmitService {
         try(BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"))) {
             lines = new LinkedList<String>();
             for(String tmp; (tmp = br.readLine()) != null;)
-                if (lines.add(tmp) && lines.size() > 100)
+                if (lines.add(tmp) && lines.size() > 1000)
                     lines.remove(0);
         } catch (IOException e) {
             e.printStackTrace();
@@ -168,8 +176,21 @@ public class SparkSubmitService {
 
     @Async
     public void cancelJob(){
+        finished = false;
         process.destroy();
     }
 
+
+
+    private String hashMapToText(Map<String,String> queryParams){
+        StringBuilder params = new StringBuilder(500);
+        for(String key : queryParams.keySet()){
+            params.append(key);
+            params.append(": ");
+            params.append(queryParams.get(key));
+            params.append("/////");
+        }
+        return params.toString();
+    }
 
 }
