@@ -62,7 +62,7 @@ public class SparkSubmitService {
         // write the job configuration into a file
         if(queryMap.containsKey("save_clf") && queryMap.get("save_clf").equals("true")){
             String text = hashMapToText(queryMap);
-            try(  PrintWriter out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf")  ){
+            try(PrintWriter out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf")  ){
                 out.println(text);
 
             } catch (FileNotFoundException e) {

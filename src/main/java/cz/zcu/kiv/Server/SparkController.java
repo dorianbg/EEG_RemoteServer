@@ -67,13 +67,16 @@ public class SparkController {
     public String getSavedClassifiers(){
         logger.info("Fetching saved classifiers");
         File file = new File(System.getProperty("user.home") + "/spark_server/classifiers");
-        String[] directories = file.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
+        File[] listOfFiles = file.listFiles();
+        ArrayList<String> filteredFiles = new ArrayList<>();
+
+        for (File tFile : listOfFiles){
+            if(!tFile.getName().startsWith(".")){
+                filteredFiles.add(tFile.getName());
             }
-        });
-        return Arrays.toString(directories);
+        }
+
+        return filteredFiles.toString();
     }
 
     @RequestMapping(value = "/jobs/log/{id}", method = RequestMethod.GET)
