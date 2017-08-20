@@ -1,8 +1,9 @@
-# EEG_Server
+# EEG_WebServer
 
 Web server built using Spring Boot that creates EEG data analysis jobs, check their status and get the result over a REST API.
 
-##### The server listens for requests:  
+--- 
+#### The server listens for requests:  
 - /jobs/submit/(id)?{qp}  
 		- to submit a job with configuration specified in the query parameters  
 - /jobs/check/(id)  
@@ -22,9 +23,17 @@ Web server built using Spring Boot that creates EEG data analysis jobs, check th
 where the {id} or {name} are path variables provided by the client,
 and {qp} are query parameters that configure the spark application.
 
+---
 
+#### Requirements
 
-##### The supported query parameters are:  
+Java 6+  
+Open port: 8990  
+Place the Data Analysis Package in the same directory as this JAR file
+
+---
+
+#### The supported query parameters are:  
 
  0. Id (REQUIRED - the id of the job)  
   - id = {some_integer}*

@@ -5,6 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.scheduling.annotation.Async;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,13 +49,25 @@ public class SparkSubmitService {
     public void submitJob(Map<String,String> queryMap, int id){
         logger.info("Submitting a job with query parameters = " + queryMap);
         this.queryMap = queryMap;
+
+        // result path
+        queryMap.put("result_path", System.getProperty("user.home") + "/spark_server/results/" + id + ".txt");
+        if(queryMap.containsKey("save_name")){
+            queryMap.put("save_name",System.getProperty("user.home") + "/spark_server/classifiers/" + queryMap.get("save_name"));
+        }
+
+        String jarName = "remote-server-2.0.jar";
+        String decodedPath = SparkSubmitService.class.getProtectionDomain().getCodeSource().getLocation().getPath().split(jarName)[0];
+
+        logger.info("Decoded path: " + decodedPath);
+
         String content = "spark-submit " +
                 "--class cz.zcu.kiv.Main " +
                 "--master local[*] " +
                 "--conf spark.driver.host=localhost " +
                 "--conf spark.executor.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
                 "--conf spark.driver.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
-                "/Users/dorianbeganovic/gsoc/Spark_EEG_Analysis/target/spark_eeg-1.2-jar-with-dependencies.jar " +
+                decodedPath+"spark_eeg-1.2-jar-with-dependencies.jar " +
                 "\"" +
                 queryMap.toString().replace("{","").replace("}","").replace(", ","&") +
                 "\"";
@@ -62,13 +76,14 @@ public class SparkSubmitService {
         // write the job configuration into a file
         if(queryMap.containsKey("save_clf") && queryMap.get("save_clf").equals("true")){
             String text = hashMapToText(queryMap);
-            try(PrintWriter out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf")  ){
+            PrintWriter out;
+            try {
+                out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf");
                 out.println(text);
-
+                out.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-
         }
 
         String scriptLocation = System.getProperty("user.home") + "/spark_server/scripts/" + "spark_submit_script_jobId=" + id + ".sh";
@@ -133,20 +148,24 @@ public class SparkSubmitService {
         if(finished == false){
            return "Job cancelled";
         }
-        try(BufferedReader br = new BufferedReader(new FileReader(queryMap.get("result_path")))) {
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(queryMap.get("result_path")));
+            try {
+                StringBuilder sb = new StringBuilder();
+                String line = br.readLine();
 
-            while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-                line = br.readLine();
-            }
-            if(sb.toString().length()==0){
-                return "Job failed";
-            }
-            else{
-                return sb.toString();
+                while (line != null) {
+                    sb.append(line);
+                    sb.append("\n");
+                    line = br.readLine();
+                }
+                if (sb.toString().length() == 0) {
+                    return "Job failed";
+                } else {
+                    return sb.toString();
+                }
+            } finally {
+                br.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -157,11 +176,16 @@ public class SparkSubmitService {
     @Async
     public String getLog(int id){
         List<String> lines = null;
-        try(BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"))) {
-            lines = new LinkedList<String>();
-            for(String tmp; (tmp = br.readLine()) != null;)
-                if (lines.add(tmp) && lines.size() > 1000)
-                    lines.remove(0);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"));
+            try {
+                lines = new LinkedList<String>();
+                for (String tmp; (tmp = br.readLine()) != null; )
+                    if (lines.add(tmp) && lines.size() > 1000)
+                        lines.remove(0);
+            } finally {
+                br.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

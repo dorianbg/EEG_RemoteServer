@@ -36,7 +36,7 @@ import java.util.*;
 public class SparkController {
     private static Log logger = LogFactory.getLog(SparkController.class);
 
-    HashMap<Integer,SparkSubmitService> jobManager = new HashMap<>(100);
+    HashMap<Integer,SparkSubmitService> jobManager = new HashMap<Integer,SparkSubmitService>(100);
 
     @Async
     @RequestMapping(value = "/jobs/submit/{id}",method = RequestMethod.GET)
@@ -68,7 +68,7 @@ public class SparkController {
         logger.info("Fetching saved classifiers");
         File file = new File(System.getProperty("user.home") + "/spark_server/classifiers");
         File[] listOfFiles = file.listFiles();
-        ArrayList<String> filteredFiles = new ArrayList<>();
+        ArrayList<String> filteredFiles = new ArrayList<String>();
 
         for (File tFile : listOfFiles){
             if(!tFile.getName().startsWith(".")){
@@ -91,7 +91,9 @@ public class SparkController {
 
         StringBuilder sb = new StringBuilder(25);
         String line;
-        try(BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/configurations/" + name + ".conf"))) {
+        try
+        {
+            BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/configurations/" + name + ".conf"));
             while((line = br.readLine()) != null) {
                 sb.append(line);
             }
