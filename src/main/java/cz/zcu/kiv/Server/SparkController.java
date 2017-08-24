@@ -36,12 +36,7 @@ import java.util.*;
 public class SparkController {
     private static Log logger = LogFactory.getLog(SparkController.class);
 
-    LinkedHashMap<Integer,SparkSubmitService> jobManager = new LinkedHashMap<Integer,SparkSubmitService>(20){
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Integer,SparkSubmitService> eldest) {
-            return this.size() > 20;
-        }
-    };
+    LinkedHashMap<Integer,SparkSubmitService> jobManager = new LinkedHashMap<Integer,SparkSubmitService>(500);
 
     @Async
     @RequestMapping(value = "/jobs/submit/{id}",method = RequestMethod.GET)
@@ -52,6 +47,14 @@ public class SparkController {
         logger.info("Entries " + jobManager.entrySet());
         // actually submit a job
         jobManager.get(id).submitJob(queryMap,id);
+        if(jobManager.size() > 200){
+            int counter = 0;
+            for( Map.Entry<Integer,SparkSubmitService> entry : jobManager.entrySet() ) {
+                if(entry.getValue().checkStatus().equals("FINISHED") && counter < 100)
+                    jobManager.remove(entry.getKey());
+                    counter++;
+            }
+        }
         return "OK";
     }
 
