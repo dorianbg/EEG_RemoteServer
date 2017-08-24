@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Async;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.security.CodeSource;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -58,15 +59,15 @@ public class SparkSubmitService {
 
         String jarName = "remote-server-2.0.jar";
         String decodedPath = SparkSubmitService.class.getProtectionDomain().getCodeSource().getLocation().getPath().split(jarName)[0];
+        logger.info("Decoded path = " + decodedPath);
 
-        logger.info("Decoded path: " + decodedPath);
 
         String content = "spark-submit " +
                 "--class cz.zcu.kiv.Main " +
                 "--master local[*] " +
                 "--conf spark.driver.host=localhost " +
-                "--conf spark.executor.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
-                "--conf spark.driver.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " +
+                "--conf spark.executor.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " + // configure the log file
+                "--conf spark.driver.extraJavaOptions=-Dlogfile.name=" + System.getProperty("user.home") + "/spark_server/logs/" + id + " " + // configure the log file
                 decodedPath+"spark_eeg-1.2-jar-with-dependencies.jar " +
                 "\"" +
                 queryMap.toString().replace("{","").replace("}","").replace(", ","&") +
@@ -82,6 +83,7 @@ public class SparkSubmitService {
                 out.println(text);
                 out.close();
             } catch (FileNotFoundException e) {
+                logger.info(e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -95,6 +97,7 @@ public class SparkSubmitService {
         try {
             out = new PrintWriter(scriptLocation);
         } catch (FileNotFoundException e) {
+            logger.info(e.getMessage());
             e.printStackTrace();
         }
         out.print(content);
@@ -110,6 +113,7 @@ public class SparkSubmitService {
             process = Runtime.getRuntime().exec(command);
             //process.waitFor();
         } catch (IOException e) {
+            logger.info(e.getMessage());
             e.printStackTrace();
         }
 
@@ -124,6 +128,7 @@ public class SparkSubmitService {
                 logger.info("Script output: " + s); // Replace this line with the code to print the result to file
             }
         } catch (IOException e) {
+            logger.info(e.getMessage());
             e.printStackTrace();
         }
 
@@ -168,6 +173,7 @@ public class SparkSubmitService {
                 br.close();
             }
         } catch (IOException e) {
+            logger.info(e.getMessage());
             e.printStackTrace();
         }
         return "";
@@ -187,6 +193,7 @@ public class SparkSubmitService {
                 br.close();
             }
         } catch (IOException e) {
+            logger.info(e.getMessage());
             e.printStackTrace();
         }
         StringBuilder sb = new StringBuilder(10000);

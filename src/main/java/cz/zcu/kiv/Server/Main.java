@@ -33,6 +33,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class Main {
     public static void main(String[] args) {
 
+        System.setProperty("logfile.name",System.getProperty("user.home")+"/spark_server/remote-server.log");
         Initialize.initFolder();
         SpringApplication.run(Main.class,args);
     }

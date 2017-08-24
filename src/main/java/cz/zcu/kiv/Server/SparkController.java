@@ -36,7 +36,12 @@ import java.util.*;
 public class SparkController {
     private static Log logger = LogFactory.getLog(SparkController.class);
 
-    HashMap<Integer,SparkSubmitService> jobManager = new HashMap<Integer,SparkSubmitService>(100);
+    LinkedHashMap<Integer,SparkSubmitService> jobManager = new LinkedHashMap<Integer,SparkSubmitService>(20){
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer,SparkSubmitService> eldest) {
+            return this.size() > 20;
+        }
+    };
 
     @Async
     @RequestMapping(value = "/jobs/submit/{id}",method = RequestMethod.GET)
@@ -75,7 +80,6 @@ public class SparkController {
                 filteredFiles.add(tFile.getName());
             }
         }
-
         return filteredFiles.toString();
     }
 
@@ -98,6 +102,7 @@ public class SparkController {
                 sb.append(line);
             }
         } catch (IOException e) {
+
             e.printStackTrace();
         }
         return sb.toString();
