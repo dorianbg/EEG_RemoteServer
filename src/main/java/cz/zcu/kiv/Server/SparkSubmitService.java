@@ -47,10 +47,14 @@ public class SparkSubmitService {
 
 
     @Async
-    public void submitJob(Map<String,String> queryMap, int id){
+    public void submitJob(Map<String,String> queryMap, int id) throws IOException {
         logger.info("Submitting a job with query parameters = " + queryMap);
         this.queryMap = queryMap;
 
+        String originalSaveFilename = "";
+        if(queryMap.containsKey("save_name")){
+            originalSaveFilename = queryMap.get("save_name");
+        }
         // result path
         queryMap.put("result_path", System.getProperty("user.home") + "/spark_server/results/" + id + ".txt");
         if(queryMap.containsKey("save_name")){
@@ -75,17 +79,11 @@ public class SparkSubmitService {
         logger.info("Content of the script" + content);
 
         // write the job configuration into a file
-        if(queryMap.containsKey("save_clf") && queryMap.get("save_clf").equals("true")){
+        if (queryMap.containsKey("save_clf") && queryMap.get("save_clf").equals("true")) {
             String text = hashMapToText(queryMap);
-            PrintWriter out;
-            try {
-                out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + queryMap.get("save_name") + ".conf");
-                out.println(text);
-                out.close();
-            } catch (FileNotFoundException e) {
-                logger.info(e.getMessage());
-                e.printStackTrace();
-            }
+            PrintWriter out = new PrintWriter(System.getProperty("user.home") + "/spark_server/configurations/" + originalSaveFilename + ".conf");
+            out.println(text);
+            out.close();
         }
 
         String scriptLocation = System.getProperty("user.home") + "/spark_server/scripts/" + "spark_submit_script_jobId=" + id + ".sh";
@@ -93,46 +91,27 @@ public class SparkSubmitService {
 
         logger.info("Script location" + scriptLocation);
 
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(scriptLocation);
-        } catch (FileNotFoundException e) {
-            logger.info(e.getMessage());
-            e.printStackTrace();
-        }
+        PrintWriter out = new PrintWriter(scriptLocation);
         out.print(content);
         out.close();
 
 
         File script = new File(scriptLocation);
         script.setExecutable(true);
-        String[] command = { scriptLocation};
+        String[] command = {scriptLocation};
 
-        try {
-            // this executes the script
-            process = Runtime.getRuntime().exec(command);
-            //process.waitFor();
-        } catch (IOException e) {
-            logger.info(e.getMessage());
-            e.printStackTrace();
-        }
+        process = Runtime.getRuntime().exec(command);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
 
         logger.info("Executing the script");
         String s;
-        try {
-            while ((s = reader.readLine()) != null) {
-                // pauses the program while executing
-                logger.info("Script output: " + s); // Replace this line with the code to print the result to file
-            }
-        } catch (IOException e) {
-            logger.info(e.getMessage());
-            e.printStackTrace();
+        while ((s = reader.readLine()) != null) {
+            // pauses the program while executing
+            logger.info("Job output : " + s); // Replace this line with the code to print the result to file
         }
-
-        logger.info("Script is finished");
+        logger.info("Job is finished");
     }
 
     @Async
@@ -147,58 +126,41 @@ public class SparkSubmitService {
     }
 
     @Async
-    public String getResults(){
+    public String getResults() throws IOException{
         logger.info("Reading results for job in location " + queryMap.get("result_path"));
 
         if(finished == false){
            return "Job cancelled";
         }
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(queryMap.get("result_path")));
-            try {
-                StringBuilder sb = new StringBuilder();
-                String line = br.readLine();
+        BufferedReader br = new BufferedReader(new FileReader(queryMap.get("result_path")));
+        StringBuilder sb = new StringBuilder();
+        String line = br.readLine();
 
-                while (line != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                    line = br.readLine();
-                }
-                if (sb.toString().length() == 0) {
-                    return "Job failed";
-                } else {
-                    return sb.toString();
-                }
-            } finally {
-                br.close();
-            }
-        } catch (IOException e) {
-            logger.info(e.getMessage());
-            e.printStackTrace();
+        while (line != null) {
+            sb.append(line);
+            sb.append("\n");
+            line = br.readLine();
         }
-        return "";
+        br.close();
+
+        if (sb.toString().length() == 0) {
+            return "Job failed";
+        } else {
+            return sb.toString();
+        }
     }
 
     @Async
-    public String getLog(int id){
+    public String getLog(int id) throws IOException{
         List<String> lines = null;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"));
-            try {
-                lines = new LinkedList<String>();
-                for (String tmp; (tmp = br.readLine()) != null; )
-                    if (lines.add(tmp) && lines.size() > 1000)
-                        lines.remove(0);
-            } finally {
-                br.close();
-            }
-        } catch (IOException e) {
-            logger.info(e.getMessage());
-            e.printStackTrace();
-        }
+        BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.home") + "/spark_server/logs/" + id + ".log"));
+        lines = new LinkedList<String>();
+        for (String tmp; (tmp = br.readLine()) != null; )
+            if (lines.add(tmp) && lines.size() > 1000)
+                lines.remove(0);
+        br.close();
         StringBuilder sb = new StringBuilder(10000);
-        for (String s : lines)
-        {
+        for (String s : lines) {
             sb.append(s);
             sb.append("\n");
         }
