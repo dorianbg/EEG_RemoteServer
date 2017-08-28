@@ -100,7 +100,15 @@ public class SparkSubmitService {
         script.setExecutable(true);
         String[] command = {scriptLocation};
 
-        process = Runtime.getRuntime().exec(command);
+
+        // we need to have this running so catch is here just to log
+        try {
+            // this executes the script
+            process = Runtime.getRuntime().exec(command);
+            //process.waitFor();
+        } catch (IOException e) {
+            logger.info(e.getMessage());
+        }
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
